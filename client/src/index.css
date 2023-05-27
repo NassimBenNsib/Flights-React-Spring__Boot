@@ -1,0 +1,25 @@
+* {
+  box-sizing: border-box;
+}
+
+body,
+html,
+#application {
+  margin: 0;
+  padding: 0;
+}
+
+#application {
+  max-width: 100vw;
+  min-height: 100vh;
+  height: fit-content;
+  background-color: whitesmoke;
+}
+
+.MuiFormHelperText-root {
+  margin-left: 2px !important;
+}
+
+[class*="Page"]:not([class*="Container"]) {
+  padding: 10px 0 !important;
+}
