@@ -2,12 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { ThemeProvider } from "@mui/material/styles";
-import { ThemeConfig } from "./configuration";
-import RouterConfig from "./configuration/router.config.jsx";
+import { ThemeConfig } from "./configurations";
+import RouterConfig from "./configurations/router.config";
 import { RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { StateProvider } from "./configuration/state.config";
+import { StateProvider } from "./configurations/state.config";
 
 ReactDOM.createRoot(document.getElementById("application")).render(
   <React.StrictMode>

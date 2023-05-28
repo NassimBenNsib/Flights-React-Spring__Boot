@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   TextField,
   Button,
@@ -10,96 +10,25 @@ import {
   IconButton,
   OutlinedInput,
   CircularProgress,
-  Grid,
 } from "@mui/material";
 import { MuiTelInput } from "mui-tel-input";
-import { validator, request } from "../../util";
-import { APIConfig } from "../../configuration";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { Link } from "react-router-dom";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { useDemoData } from "@mui/x-data-grid-generator";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { validator, request, generator } from "src/utils";
+import { APIConfig } from "src/configurations";
+import { USER_ROLE } from "src/constants";
 import "./style.css";
-import { generator } from "../../util";
-import { GlobalContext } from "../../configuration/state.config";
+import { GlobalContext } from "src/configurations/state.config";
 
-/*
-  i have a users page
-    The user entity has the following attributes:
-      - username
-      - firstName
-      - lastName
-      - phoneNumber
-      - email
-      - password
-      - role
-      - createdAt
-      - updatedAt
-
-    The user entity has the following actions:
-      - create
-      - read
-      - update
-      - delete
-
-      The user entity has the following routes:
-      - /user (with get,post,put,delete,patch methods)
-
-      The user entity has the following components:
-      - UsersDashboardPage
-
-    - I want create a Data view for the user entity
-        - The data View has the following elements:
-            All information about users
-            Filter by username/email/phoneNumber/firstName,lastNmae
-            Pagination
-            Search by username/email/phoneNumber/firstName,lastNmae
-            Sort by username/email/phoneNumber/firstName,lastNmae
-            Add a user
-            Edit a user
-            Delete a user
-            Show a user
-
-    - Drawer have the form to add or edit a user
-
-      
-    ===> let statrt with the data view
-
-*/
-
-const DataView = (users = []) => {
-  return (
-    <div style={{ height: 400, width: "100%" }}>
-      <DataGrid {...data} slots={{ toolbar: GridToolbar }} />
-    </div>
-  );
-};
-
-function UsersDashboardPage() {
-  const [formData, setFormData] = useState({
-    username: "nassim",
-    firstName: "Nassim",
-    lastName: "Ben Nsib",
-    phoneNumber: "+21655518510",
-    email: "bennsib.nassim@gmail.com",
-    password: "123Bingo2023&",
-    confirmPassword: "123Bingo2023&",
-  });
-
-  const [errors, setErrors] = useState({
-    username: undefined,
-    firstName: undefined,
-    lastName: undefined,
-    phoneNumber: undefined,
-    email: undefined,
-    password: undefined,
-    confirmPassword: undefined,
-  });
-
+function RegisterPage() {
+  const globalState = useContext(GlobalContext);
+  const [formData, setFormData] = useState(generator.registerDataForm(false));
+  const [errors, setErrors] = useState(generator.registerDataForm(false));
   const [formOptions, setFormOptions] = useState({
     showPassword: false,
     isLoading: false,
   });
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -119,18 +48,25 @@ function UsersDashboardPage() {
 
       request({
         callback: (data) => {
-          setFormData({ ...UsersFormData });
+          setFormData({ ...generator.registerDataForm(false) });
           setFormOptions({ ...formOptions, isLoading: false });
+          navigate("/login");
         },
         error_callback: (error) => {
           setFormOptions({ ...formOptions, isLoading: false });
         },
         method: "post",
-        url: APIConfig.baseUrl + "/user",
+        url: APIConfig.baseUrl + "/auth/signup",
         titleSuccess: "Account created successfully",
         titleError: "Cannot create account",
         withNotification: true,
-        data: formData,
+        data: {
+          ...formData,
+          role: [USER_ROLE.ROLE_USER],
+          phoneNumber: parseInt(
+            formData.phoneNumber.replaceAll(" ", "").slice(4)
+          ),
+        },
       });
     }
   };
@@ -162,9 +98,17 @@ function UsersDashboardPage() {
     });
   };
 
+  if (Boolean(globalState.state.user) === true) {
+    if (globalState.state.user.role === USER_ROLE.ROLE_ADMIN) {
+      return <Navigate to="/admin" />;
+    } else {
+      return <Navigate to="/user" />;
+    }
+  }
+
   return (
     <Box
-      className="Users-Page"
+      className="Register-Page"
       sx={{
         width: "100%",
         minHeight: "100vh",
@@ -179,7 +123,7 @@ function UsersDashboardPage() {
       <Box
         component="form"
         onSubmit={handleSubmit}
-        className="Users-Container-Page"
+        className="Register-Container-Page"
         sx={{
           width: "100%",
           maxWidth: 550,
@@ -335,11 +279,11 @@ function UsersDashboardPage() {
           <Typography variant="body2" color="textSecondary" align="center">
             Already have an account?{" "}
             <Link
-              to={{ pathname: "/login", state: { from: "Users" } }}
+              to={{ pathname: "/login", state: { from: "register" } }}
               style={{ cursor: "pointer", textDecoration: "none" }}
             >
               <Typography variant="body2" component="span" color="primary">
-                Sign In
+                Sign in
               </Typography>
             </Link>
           </Typography>
@@ -387,7 +331,7 @@ function UsersDashboardPage() {
           {formOptions.isLoading ? (
             <CircularProgress color="secondary" />
           ) : (
-            "Users"
+            "REGISTER"
           )}
         </Button>
       </Box>
@@ -395,36 +339,4 @@ function UsersDashboardPage() {
   );
 }
 
-const VISIBLE_FIELDS = ["name", "rating", "country", "dateCreated", "isAdmin"];
-
-export default function BasicExampleDataGrid() {
-  const { data, loadNewData, loading, setRowLength } = useDemoData({
-    dataSet: "Employee",
-    visibleFields: VISIBLE_FIELDS,
-    rowLength: 100,
-  });
-  const [formData, setFormData] = useState({});
-
-  console.log("data", data);
-
-  return (
-    <Box sx={{ height: 400, width: "100%" }} className="UsersDashboard-Page">
-      <Box className="UsersDashboard-Container-Page">
-        {/* <Gird container>
-          <Grid>
-            <TextField
-              fullWidth
-              label="Username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              margin="normal"
-              variant="outlined"
-            />
-          </Grid>
-        </Gird> */}
-        <DataGrid {...data} slots={{ toolbar: GridToolbar }} />
-      </Box>
-    </Box>
-  );
-}
+export default RegisterPage;

@@ -11,18 +11,18 @@ import {
   OutlinedInput,
   CircularProgress,
 } from "@mui/material";
-import { validator, request, showToast, generator } from "../../util";
-import { APIConfig } from "../../configuration";
+import { validator, request, showToast, generator } from "../../utils";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import "./style.css";
-import { GlobalContext } from "../../configuration/state.config";
+import { APIConfig } from "src/configurations";
+import { GlobalContext } from "src/configurations/state.config";
 import { Navigate } from "react-router-dom";
+import { USER_ROLE } from "src/constants";
 
 function RegisterPage() {
   const globalState = useContext(GlobalContext);
-
-  const [formData, setFormData] = useState(generator.loginDataForm());
+  const [formData, setFormData] = useState(generator.loginDataForm(false));
 
   const [errors, setErrors] = useState({
     email: undefined,
@@ -52,25 +52,32 @@ function RegisterPage() {
     } else {
       setFormOptions({ ...formOptions, isLoading: true });
       request({
-        callback: (data) => {
-          setFormData({ ...generator.loginDataForm(true) });
+        callback: (response) => {
+          setFormData({ ...generator.loginDataForm(false) });
           setFormOptions({ ...formOptions, isLoading: false });
-          globalState.dispatch({ type: "LOGIN", payload: data });
+
+          globalState.dispatch({
+            type: "LOGIN",
+            payload: {
+              ...response.data,
+              role: response.data.roles[0],
+              phoneNumber: "+216" + response.data.phoneNumber,
+            },
+          });
           setFormOptions({ ...formOptions, isLogged: true });
         },
         error_callback: (error) => {
           setFormOptions({ ...formOptions, isLoading: false });
         },
-        method: "get",
-        url: APIConfig.baseUrl + "/user",
-        titleSuccess: "Logged successfully",
+        method: "post",
+        url: APIConfig.baseUrl + "/auth/signin",
+        titleSuccess: "Login successfully",
         titleError: "Cannot login",
         withNotification: true,
         data: formData,
       });
     }
   };
-
   const handleFormInput = (name, value) => {
     let result;
     result = validator[`${name}Validator`]?.(value);
@@ -89,6 +96,14 @@ function RegisterPage() {
       showPassword: !formOptions.showPassword,
     });
   };
+
+  if (Boolean(globalState.state.user) === true) {
+    if (globalState.state.user.role === USER_ROLE.ROLE_ADMIN) {
+      return <Navigate to="/admin" />;
+    } else {
+      return <Navigate to="/user" />;
+    }
+  }
 
   return formOptions["isLogged"] ? (
     <Navigate to="/home" />

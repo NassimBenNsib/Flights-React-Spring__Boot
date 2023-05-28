@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   TextField,
   Button,
@@ -10,32 +10,27 @@ import {
   IconButton,
   OutlinedInput,
   CircularProgress,
-  Grid,
+  Drawer,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { MuiTelInput } from "mui-tel-input";
-import { validator, request, generator } from "../../util";
-import { APIConfig } from "../../configuration";
+import { validator, request, generator } from "src/utils";
+import { APIConfig } from "src/configurations";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { Link } from "react-router-dom";
-import "./style.css";
+import { GlobalContext } from "src/configurations/state.config";
 
-function RegisterPage() {
-  const [formData, setFormData] = useState(generator.registerDataForm());
-
-  const [errors, setErrors] = useState({
-    username: undefined,
-    firstName: undefined,
-    lastName: undefined,
-    phoneNumber: undefined,
-    email: undefined,
-    password: undefined,
-    confirmPassword: undefined,
-  });
-
+function AddUser({ open, onClose, data }) {
+  const globalState = React.useContext(GlobalContext);
+  const [formData, setFormData] = useState({});
+  const [errors, setErrors] = useState(generator.user(false));
   const [formOptions, setFormOptions] = useState({
     showPassword: false,
     isLoading: false,
   });
+  useEffect(() => {
+    setFormData({ ...generator.user(false), ...data });
+  }, [data]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,21 +48,83 @@ function RegisterPage() {
     } else {
       setFormOptions({ ...formOptions, isLoading: true });
 
-      request({
-        callback: (data) => {
-          setFormData({ ...generator.registerDataForm(false) });
-          setFormOptions({ ...formOptions, isLoading: false });
-        },
-        error_callback: (error) => {
-          setFormOptions({ ...formOptions, isLoading: false });
-        },
-        method: "post",
-        url: APIConfig.baseUrl + "/user",
-        titleSuccess: "Account created successfully",
-        titleError: "Cannot create account",
-        withNotification: true,
-        data: formData,
-      });
+      if (data.id) {
+        request({
+          callback: (response) => {
+            const newData = {
+              ...data,
+              ...formData,
+              id: parseInt(response.data.message),
+              roles: [{ name: formData.role }],
+              phoneNumber: parseInt(
+                formData.phoneNumber.replaceAll(" ", "").slice(4)
+              ),
+            };
+            setFormData({ ...generator.user(false) });
+            setFormOptions({ ...formOptions, isLoading: false });
+            globalState.dispatch({
+              type: "EDIT",
+              payload: {
+                name: "users",
+                data: newData,
+              },
+            });
+            onClose();
+          },
+          error_callback: (error) => {
+            setFormOptions({ ...formOptions, isLoading: false });
+          },
+          method: "put",
+          url: APIConfig.baseUrl + "/auth/" + data.id,
+          titleSuccess: "User updated successfully",
+          titleError: "Cannot update user",
+          withNotification: true,
+          data: {
+            ...formData,
+            role: [formData.role],
+            phoneNumber: parseInt(
+              formData.phoneNumber.replaceAll(" ", "").slice(4)
+            ),
+          },
+        });
+      } else {
+        request({
+          callback: (response) => {
+            const newData = {
+              ...formData,
+              id: parseInt(response.data.message),
+              roles: [{ name: formData.role }],
+              phoneNumber: parseInt(
+                formData.phoneNumber.replaceAll(" ", "").slice(4)
+              ),
+            };
+            setFormData({ ...generator.user(false) });
+            setFormOptions({ ...formOptions, isLoading: false });
+            globalState.dispatch({
+              type: "ADD",
+              payload: {
+                name: "users",
+                data: newData,
+              },
+            });
+          },
+          error_callback: (error) => {
+            setFormOptions({ ...formOptions, isLoading: false });
+          },
+          method: "post",
+          url: APIConfig.baseUrl + "/auth/signup",
+          titleSuccess: "User created successfully",
+          titleError: "Cannot create new user",
+          withNotification: true,
+          data: {
+            ...formData,
+            role: [formData.role],
+            phoneNumber: parseInt(
+              formData.phoneNumber.replaceAll(" ", "").slice(4)
+            ),
+          },
+        });
+      }
     }
   };
 
@@ -99,30 +156,17 @@ function RegisterPage() {
   };
 
   return (
-    <Box
-      className="Register-Page"
-      sx={{
-        width: "100%",
-        minHeight: "100vh",
-        height: "fit-content",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
-        p: 2,
-      }}
-    >
+    <Drawer anchor={"right"} open={open} onClose={onClose}>
       <Box
         component="form"
         onSubmit={handleSubmit}
-        className="Register-Container-Page"
         sx={{
           width: "100%",
           maxWidth: 550,
+          height: "100%",
           p: 4,
           borderRadius: 5,
           bgcolor: "background.paper",
-          boxShadow: 3,
         }}
       >
         <Typography
@@ -131,7 +175,7 @@ function RegisterPage() {
           textAlign="center"
           sx={{ fontWeight: "bolder" }}
         >
-          CREATE AN ACCOUNT
+          {data.id ? "UPDATE INFORMATION" : "CREATE NEW USER"}
         </Typography>
 
         <TextField
@@ -156,6 +200,27 @@ function RegisterPage() {
           margin="normal"
           variant="outlined"
         />
+
+        <FormControl fullWidth variant="outlined" margin="normal">
+          <InputLabel id="select-role-label">Role</InputLabel>
+          <Select
+            labelId="select-role-label"
+            id="select-role-field"
+            name="role"
+            error={Boolean(errors.role)}
+            onChange={handleChange}
+            value={formData.role}
+          >
+            <MenuItem value="">None</MenuItem>
+            <MenuItem value="ROLE_ADMIN">Admin</MenuItem>
+            <MenuItem value="ROLE_USER">User</MenuItem>
+          </Select>
+          {errors.role && (
+            <Typography variant="caption" color="error" align="left">
+              {errors.role}
+            </Typography>
+          )}
+        </FormControl>
 
         <TextField
           fullWidth
@@ -267,50 +332,13 @@ function RegisterPage() {
           )}
         </FormControl>
 
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="body2" color="textSecondary" align="center">
-            Already have an account?{" "}
-            <Link
-              to={{ pathname: "/login", state: { from: "register" } }}
-              style={{ cursor: "pointer", textDecoration: "none" }}
-            >
-              <Typography variant="body2" component="span" color="primary">
-                Sign In
-              </Typography>
-            </Link>
-          </Typography>
-        </Box>
-
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="body2" color="textSecondary" align="center">
-            By creating an account, you agree to our{" "}
-            <Typography
-              variant="body2"
-              color="primary"
-              component="span"
-              sx={{ cursor: "pointer" }}
-            >
-              Terms of Service
-            </Typography>{" "}
-            and{" "}
-            <Typography
-              variant="body2"
-              color="primary"
-              component="span"
-              sx={{ cursor: "pointer" }}
-            >
-              Privacy Policy
-            </Typography>
-          </Typography>
-        </Box>
-
         <Button
           type="submit"
           fullWidth
           variant="contained"
           color="primary"
           sx={{
-            mt: 3,
+            my: 3,
             py: 1,
             background: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
             fontWeight: "bold",
@@ -322,13 +350,15 @@ function RegisterPage() {
         >
           {formOptions.isLoading ? (
             <CircularProgress color="secondary" />
+          ) : data.id ? (
+            "update"
           ) : (
-            "REGISTER"
+            "Create"
           )}
         </Button>
       </Box>
-    </Box>
+    </Drawer>
   );
 }
 
-export default RegisterPage;
+export default AddUser;

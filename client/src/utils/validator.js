@@ -14,11 +14,19 @@ function usernameValidator(value) {
   if (value.length === 0) {
     return "The username is required";
   } else if (
-    !/^(?=.{5,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/.test(value)
+    !/^(?=.{3,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/.test(value)
   ) {
     return "The username is invalid";
-  } else if (value.length < 5) {
-    return "The username must be at least 5 characters long";
+  } else if (value.length < 3) {
+    return "The username must be at least 3 characters long";
+  } else {
+    return undefined;
+  }
+}
+
+function roleValidator(value) {
+  if (value.length === 0) {
+    return "The role is required";
   } else {
     return undefined;
   }
@@ -29,8 +37,8 @@ function lastNameValidator(value) {
     return "The last name is required";
   } else if (!/^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/.test(value)) {
     return "The last name is invalid";
-  } else if (value.length < 5) {
-    return "The last name must be at least 5 characters long";
+  } else if (value.length < 3) {
+    return "The last name must be at least 3 characters long";
   } else {
     return undefined;
   }
@@ -41,8 +49,8 @@ function firstNameValidator(value) {
     return "The first name is required";
   } else if (!/^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/.test(value)) {
     return "The first name is invalid";
-  } else if (value.length < 5) {
-    return "The first name must be at least 5 characters long";
+  } else if (value.length < 3) {
+    return "The first name must be at least 3 characters long";
   } else {
     return undefined;
   }
@@ -105,4 +113,5 @@ export {
   firstNameValidator,
   lastNameValidator,
   usernameValidator,
+  roleValidator,
 };

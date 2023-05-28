@@ -1,5 +1,76 @@
 * {
   box-sizing: border-box;
+  /*
+  change the default scroll style
+  
+  */
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+:hover::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b8b3b364;
+
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-image: linear-gradient(
+    45deg,
+    #fe6b8b 25%,
+    #ff8e53 50%,
+    #fe6b8b 75%
+  );
+}
+
+::-webkit-scrollbar-thumb:increment,
+::-webkit-scrollbar-thumb:decrement {
+  background-image: linear-gradient(
+    45deg,
+    #fe6b8b 25%,
+    #ff8e53 50%,
+    #fe6b8b 75%
+  );
+}
+::-webkit-scrollbar-thumb:active {
+  background-image: linear-gradient(
+    45deg,
+    #fe6b8b 25%,
+    #ff8e53 50%,
+    #fe6b8b 75%
+  );
+}
+
+::-webkit-scrollbar-corner {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-resizer {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-button:start:decrement,
+::-webkit-scrollbar-button:end:increment {
+  display: block;
+  height: 10px;
+  background-color: transparent;
 }
 
 body,
@@ -12,7 +83,6 @@ html,
 #application {
   max-width: 100vw;
   min-height: 100vh;
-  height: fit-content;
   background-color: whitesmoke;
 }
 
@@ -20,6 +90,26 @@ html,
   margin-left: 2px !important;
 }
 
+.MuiFormLabel-root::after {
+  content: "";
+  width: calc(100% + 20px) !important;
+  min-width: none;
+  max-width: none;
+  height: 100%;
+  position: absolute;
+  left: -10px;
+  z-index: -1;
+  background-color: white;
+}
+.MuiFormLabel-root {
+  overflow: visible !important;
+}
+
+.MuiDataGrid-root,
+.MuiDataGrid-virtualScrollerContent {
+  min-height: 100% !important;
+}
+
 [class*="Page"]:not([class*="Container"]) {
-  padding: 10px 0 !important;
+  padding: 0 !important;
 }

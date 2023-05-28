@@ -19,11 +19,10 @@ const request = ({
     .catch((error) => {
       withNotification &&
         showToast({
-          message: titleError + "\n\n" + error.message,
+          message: titleError + "\n\n" + error?.response?.data?.message,
           type: "error",
         });
       console.error(error);
-      console.log(url);
       error_callback(error);
     });
 };
